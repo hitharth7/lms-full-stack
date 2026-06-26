@@ -9,7 +9,7 @@ import Footer from '../../components/student/Footer.jsx'
 
 const Home = () => {
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,#eff6ff_0%,#ffffff_34%,#f8fafc_100%)]">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#e0f2fe_0%,#ffffff_38%)]">
       <Navbar />
       <Hero />
       <Companies />

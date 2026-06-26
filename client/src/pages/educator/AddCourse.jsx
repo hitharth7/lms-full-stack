@@ -26,6 +26,7 @@ const AddCourse = () => {
 
   useEffect(() => {
     if (editorRef.current && !quill) {
+      if (editorRef.current.classList.contains('ql-container')) return;
       const q = new Quill(editorRef.current, {
         theme: 'snow',
         placeholder: 'Write a detailed course summary, requirements, and curriculum guides...',
@@ -101,6 +102,22 @@ const AddCourse = () => {
       }
       return ch;
     }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.type !== "image/jpeg" && file.type !== "image/jpg" && !file.name.toLowerCase().endsWith('.jpg') && !file.name.toLowerCase().endsWith('.jpeg')) {
+      toast.error("Please upload a JPG/JPEG format image only.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setSelectedThumbnail(reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e) => {
@@ -190,6 +207,33 @@ const AddCourse = () => {
                     {selectedThumbnail === t.value && <Check className="w-4 h-4 text-white" />}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-xs font-bold uppercase text-gray-400">Or Cover Image (JPG only)</label>
+              <div className="flex items-center gap-4 pt-1">
+                <label className="flex items-center justify-center px-4 py-2.5 border border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors text-xs font-bold text-gray-600">
+                  Upload JPG Image
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,image/jpeg"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </label>
+                {selectedThumbnail && !selectedThumbnail.startsWith("linear-gradient") && (
+                  <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-gray-200 shadow-sm group">
+                    <img src={selectedThumbnail} alt="preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setSelectedThumbnail("linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)")}
+                      className="absolute inset-0 bg-black/50 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity text-[10px] font-bold cursor-pointer"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 

@@ -152,3 +152,55 @@ exports.updateProgress = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// @desc    Rate a course
+// @route   POST /api/enrollments/:courseId/rate
+// @access  Private (student)
+exports.rateCourse = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { rating } = req.body;
+
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+    }
+
+    const enrollment = await Enrollment.findOne({
+      student: req.user._id,
+      course: courseId,
+    });
+
+    if (!enrollment) {
+      return res.status(404).json({ success: false, message: 'Enrollment not found' });
+    }
+
+    // Save rating on enrollment
+    enrollment.rating = rating;
+    await enrollment.save();
+
+    // Recalculate course ratings
+    const ratedEnrollments = await Enrollment.find({
+      course: courseId,
+      rating: { $exists: true, $ne: null }
+    });
+
+    const numRatings = ratedEnrollments.length;
+    const averageRating = numRatings > 0 
+      ? parseFloat((ratedEnrollments.reduce((sum, e) => sum + e.rating, 0) / numRatings).toFixed(1))
+      : 0;
+
+    await Course.findByIdAndUpdate(courseId, {
+      rating: averageRating,
+      numRatings: numRatings
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Course rated successfully',
+      rating: averageRating,
+      numRatings: numRatings
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

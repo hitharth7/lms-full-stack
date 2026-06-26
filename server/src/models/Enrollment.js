@@ -26,6 +26,11 @@ const EnrollmentSchema = new mongoose.Schema(
       type: [String], // array of lectureIds
       default: [],
     },
+    rating: {
+      type: Number,
+      min: 1,
+      max: 5,
+    },
   },
   {
     timestamps: true,

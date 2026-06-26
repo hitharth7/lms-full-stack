@@ -307,6 +307,24 @@ export const AppContextProvider = ({ children }) => {
     return Math.round((completed.length / totalLectures) * 100);
   };
 
+  const rateCourse = async (courseId, rating) => {
+    try {
+      const res = await authFetch(`/api/enrollments/${courseId}/rate`, {
+        method: "POST",
+        body: JSON.stringify({ rating }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchCourses();
+        await fetchMyEnrollments();
+        return { success: true };
+      }
+      return { success: false, message: data.message };
+    } catch (err) {
+      return { success: false, message: err.message };
+    }
+  };
+
   // ─── COURSE CREATION ─────────────────────────────────────────────────────────
 
   const addCourse = async (courseData) => {
@@ -377,6 +395,7 @@ export const AppContextProvider = ({ children }) => {
     getCompletedLectures,
     toggleLectureCompletion,
     getCourseProgressPercent,
+    rateCourse,
 
     // Course creation
     addCourse,

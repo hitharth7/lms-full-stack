@@ -1,23 +1,24 @@
 import React from 'react'
 import SearchBar from './SearchBar.jsx'
 import { Sparkles, Trophy, Video } from 'lucide-react'
+import { assets } from '../../assets/assets.js'
 
 const Hero = () => {
   return (
-    <div className="relative overflow-hidden bg-white pt-12 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24">
+    <div className="relative overflow-hidden bg-white/0 pt-12 pb-16 sm:pt-16 sm:pb-20 lg:pt-20 lg:pb-24">
       {/* Subtle radial gradient background */}
       <div className="absolute top-0 left-1/2 -z-10 -translate-x-1/2 w-[1000px] h-[450px] bg-gradient-to-b from-blue-50/40 to-transparent blur-3xl rounded-full opacity-60"></div>
       
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10 animate-fade-in-up">
         {/* Badge */}
-        <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-100 mb-6">
-          <Sparkles className="w-3.5 h-3.5" />
+        <div className="inline-flex items-center gap-2 px-4.5 py-2 rounded-full text-sm sm:text-base font-semibold text-blue-600 bg-blue-50 border border-blue-100 mb-6">
+          <Sparkles className="w-4 h-4" />
           <span>Interactive, Premium Education</span>
         </div>
 
         {/* Title */}
         <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-gray-900 tracking-tight max-w-4xl mx-auto leading-[1.15] mb-6">
-          Unlock Your Potential with <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Edemy</span> Courses
+          Empower your future with the courses designed to <span className="text-blue-600 relative inline-block">fit your choice<img src={assets.sketch} className="absolute left-0 w-full" style={{ bottom: '-35px' }} alt="sketch" /></span>.
         </h1>
 
         {/* Subtitle */}

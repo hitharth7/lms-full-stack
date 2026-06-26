@@ -3,7 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { AppContext } from '../../context/AppContext.jsx'
 import YouTube from 'react-youtube'
 import { Line } from 'rc-progress'
-import { ArrowLeft, CheckCircle, ChevronDown, ChevronUp, Play, BookOpen, Clock } from 'lucide-react'
+import { toast } from 'react-toastify'
+import { ArrowLeft, CheckCircle, ChevronDown, ChevronUp, Play, BookOpen, Clock, Star } from 'lucide-react'
 import { formatCourseDuration } from '../../utils/formatDuration.js'
 
 const Player = () => {
@@ -16,11 +17,18 @@ const Player = () => {
     getCourseProgressPercent,
     isEnrolled,
     enrollmentsLoading,
+    rateCourse,
+    getEnrollmentForCourse,
   } = useContext(AppContext);
 
   const [activeLecture, setActiveLecture] = useState(null);
   const [openChapters, setOpenChapters] = useState({});
   const [activeTab, setActiveTab] = useState("overview");
+  
+  // Rating states
+  const [selectedRating, setSelectedRating] = useState(0);
+  const [hoveredRating, setHoveredRating] = useState(0);
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
 
   const course = courses.find((c) => c._id === id);
   const completedLectures = getCompletedLectures(id);
@@ -47,6 +55,32 @@ const Player = () => {
     });
     setOpenChapters(initialOpen);
   }, [course, enrollmentsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const enrollment = getEnrollmentForCourse(id);
+
+  useEffect(() => {
+    if (enrollment?.rating) {
+      setSelectedRating(enrollment.rating);
+    }
+  }, [enrollment]);
+
+  const handleSubmitRating = async () => {
+    if (selectedRating < 1 || selectedRating > 5) return;
+    setRatingSubmitting(true);
+    try {
+      const res = await rateCourse(course._id, selectedRating);
+      if (res.success) {
+        toast.success("Thank you! Your rating has been saved successfully.");
+      } else {
+        toast.error(res.message || "Failed to submit rating.");
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Something went wrong while saving your rating.");
+    } finally {
+      setRatingSubmitting(false);
+    }
+  };
 
   if (!course || !activeLecture) {
     return (
@@ -156,7 +190,7 @@ const Player = () => {
 
             {/* Tab Selectors */}
             <div className="flex border-b border-gray-100 gap-6 text-sm font-semibold mb-6">
-              {["overview", "qa", "notes"].map((tab) => (
+              {["overview", "review", "notes"].map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -166,7 +200,7 @@ const Player = () => {
                       : "text-gray-400 hover:text-gray-600"
                   }`}
                 >
-                  {tab === "qa" ? "Q&A" : tab}
+                  {tab}
                 </button>
               ))}
             </div>
@@ -181,16 +215,48 @@ const Player = () => {
                 </div>
               )}
 
-              {activeTab === "qa" && (
-                <div className="space-y-4">
-                  <div className="p-3 bg-gray-50 rounded-xl">
-                    <p className="font-bold text-xs text-gray-700">James Anderson &bull; 2 hours ago</p>
-                    <p className="text-sm text-gray-600 mt-1">Should we wrap this component inside React.memo for production performance?</p>
+              {activeTab === "review" && (
+                <div className="space-y-4 max-w-md">
+                  <h3 className="font-bold text-gray-800 mb-1">Review this Course</h3>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Share your experience by leaving a star rating.
+                  </p>
+                  
+                  <div className="flex items-center gap-1.5 mb-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setSelectedRating(star)}
+                        onMouseEnter={() => setHoveredRating(star)}
+                        onMouseLeave={() => setHoveredRating(0)}
+                        className="p-0.5 hover:scale-110 transition-transform cursor-pointer"
+                      >
+                        <Star
+                          className={`w-7 h-7 transition-colors ${
+                            star <= (hoveredRating || selectedRating)
+                              ? "fill-amber-400 text-amber-400"
+                              : "text-gray-300 fill-gray-100"
+                          }`}
+                        />
+                      </button>
+                    ))}
                   </div>
-                  <div className="p-3 bg-blue-50/50 rounded-xl pl-6 border-l-2 border-blue-500">
-                    <p className="font-bold text-xs text-blue-700">Sarah Jenkins (Instructor) &bull; 1 hour ago</p>
-                    <p className="text-sm text-gray-600 mt-1">Only if it is rendering frequently with the same props. Usually standard renders are extremely optimized in React 19.</p>
-                  </div>
+                  
+                  <button
+                    onClick={handleSubmitRating}
+                    disabled={selectedRating === 0 || ratingSubmitting}
+                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs rounded-xl disabled:bg-gray-300 disabled:cursor-not-allowed transition-all cursor-pointer"
+                  >
+                    {ratingSubmitting ? "Submitting..." : "Submit Rating"}
+                  </button>
+
+                  {enrollment?.rating && (
+                    <p className="text-xs text-emerald-600 font-semibold mt-2 flex items-center gap-1">
+                      <CheckCircle className="w-3.5 h-3.5 fill-emerald-600 text-white" />
+                      Your current rating: {enrollment.rating} out of 5 stars
+                    </p>
+                  )}
                 </div>
               )}
 
