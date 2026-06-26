@@ -2,7 +2,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import Rating from './Rating.jsx'
 import { Clock, BookOpen } from 'lucide-react'
-import { getThumbnailThemeClass, isGradientThumbnail } from '../../utils/courseThumbnail.js'
+import { getThumbnailThemeClass, isGradientThumbnail, getThumbnailUrl } from '../../utils/courseThumbnail.js'
 import { formatCourseDuration } from '../../utils/formatDuration.js'
 
 const CourseCard = ({ course }) => {
@@ -20,7 +20,7 @@ const CourseCard = ({ course }) => {
         }`}
       >
         {!isGradientThumbnail(course.courseThumbnail) && course.courseThumbnail && (
-          <img src={course.courseThumbnail} alt={course.courseTitle} className="course-thumbnail-image" />
+          <img src={getThumbnailUrl(course.courseThumbnail)} alt={course.courseTitle} className="course-thumbnail-image" />
         )}
       </div>
 

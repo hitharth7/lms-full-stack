@@ -1,22 +1,16 @@
 import React, { useContext, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { AppContext } from '../../context/AppContext.jsx'
-import { LogOut, RefreshCw, Layers } from 'lucide-react'
+import { LogOut, Layers } from 'lucide-react'
 import { assets } from '../../assets/assets.js'
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const { userRole, currentStudent, resetDatabase, enrolledCourseIds, isAuthenticated, logout } = useContext(AppContext);
+  const { userRole, currentStudent, enrollments, isAuthenticated, logout } = useContext(AppContext);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const isEducator = userRole === 'educator';
 
-  const handleReset = () => {
-    resetDatabase();
-    setDropdownOpen(false);
-    navigate('/');
-    // Reload state clean
-    window.location.reload();
-  };
+  const enrollmentCount = enrollments?.length || 0;
 
   return (
     <nav className="sticky top-0 z-50 bg-white/90 border-b border-gray-100 backdrop-blur-md">
@@ -66,9 +60,9 @@ const Navbar = () => {
                     className="text-sm font-semibold text-gray-600 hover:text-blue-600 transition-colors duration-300 relative py-2"
                   >
                     My Enrollments
-                    {enrolledCourseIds.length > 0 && (
+                    {enrollmentCount > 0 && (
                       <span className="absolute -top-1 -right-3 w-4.5 h-4.5 bg-blue-600 text-white rounded-full text-[10px] flex items-center justify-center font-bold">
-                        {enrolledCourseIds.length}
+                        {enrollmentCount}
                       </span>
                     )}
                   </Link>
@@ -109,14 +103,7 @@ const Navbar = () => {
                           </Link>
                         )}
 
-                        {/* Reset mock database state */}
-                        <button
-                          onClick={handleReset}
-                          className="w-full text-left px-4 py-2 text-sm text-amber-600 hover:bg-amber-50 flex items-center gap-2.5 cursor-pointer border-t border-gray-50"
-                        >
-                          <RefreshCw className="w-4 h-4 text-amber-500" />
-                          Reset Demo Data
-                        </button>
+
 
                         <button
                           onClick={() => {

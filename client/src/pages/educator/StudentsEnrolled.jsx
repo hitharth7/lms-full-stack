@@ -1,10 +1,24 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../../context/AppContext.jsx'
-import { Users } from 'lucide-react'
+import { Users, Loader2 } from 'lucide-react'
 
 const StudentsEnrolled = () => {
-  const { getEducatorMetrics } = useContext(AppContext);
-  const { recentStudents } = getEducatorMetrics();
+  const { fetchEducatorDashboard, educatorDashboard, educatorLoading } = useContext(AppContext);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    fetchEducatorDashboard().finally(() => setInitialized(true));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const recentStudents = educatorDashboard?.recentStudents || [];
+
+  if (!initialized || educatorLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

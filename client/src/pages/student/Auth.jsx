@@ -48,9 +48,9 @@ const Auth = () => {
     setError('')
     setLoading(true)
 
-    const result = mode === 'login'
+    const result = await (mode === 'login'
       ? login({ email: form.email, password: form.password })
-      : signup({ name: form.name, email: form.email, password: form.password, role: form.role })
+      : signup({ name: form.name, email: form.email, password: form.password, role: form.role }))
 
     setLoading(false)
 

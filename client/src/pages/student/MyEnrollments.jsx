@@ -4,12 +4,12 @@ import { AppContext } from '../../context/AppContext.jsx'
 import Navbar from '../../components/student/Navbar.jsx'
 import Footer from '../../components/student/Footer.jsx'
 import { Line } from 'rc-progress'
-import { BookOpen, CheckCircle } from 'lucide-react'
-import { getThumbnailThemeClass, isGradientThumbnail } from '../../utils/courseThumbnail.js'
+import { BookOpen, CheckCircle, Loader2 } from 'lucide-react'
+import { getThumbnailThemeClass, isGradientThumbnail, getThumbnailUrl } from '../../utils/courseThumbnail.js'
 
 const MyEnrollments = () => {
   const navigate = useNavigate();
-  const { getEnrolledCourses, getCourseProgressPercent } = useContext(AppContext);
+  const { getEnrolledCourses, getCourseProgressPercent, enrollmentsLoading } = useContext(AppContext);
 
   const enrolledCourses = getEnrolledCourses();
 
@@ -22,24 +22,28 @@ const MyEnrollments = () => {
           My Enrollments
         </h1>
 
-        {enrolledCourses.length > 0 ? (
+        {enrollmentsLoading ? (
+          <div className="flex items-center justify-center py-24">
+            <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+          </div>
+        ) : enrolledCourses.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {enrolledCourses.map((course) => {
               const progress = getCourseProgressPercent(course._id);
-              
+
               return (
-                <div 
+                <div
                   key={course._id}
                   className="flex flex-col sm:flex-row border border-gray-100 rounded-2xl p-4 bg-white hover:shadow-lg transition-shadow duration-300 gap-5 items-center sm:items-stretch"
                 >
                   {/* Thumbnail */}
-                  <div 
+                  <div
                     className={`w-full sm:w-48 h-32 rounded-xl flex-shrink-0 flex items-center justify-center relative overflow-hidden course-thumbnail-frame ${
                       isGradientThumbnail(course.courseThumbnail) ? getThumbnailThemeClass(course.courseThumbnail) : ""
                     }`}
                   >
                     {!isGradientThumbnail(course.courseThumbnail) && course.courseThumbnail && (
-                      <img src={course.courseThumbnail} alt={course.courseTitle} className="course-thumbnail-image" />
+                      <img src={getThumbnailUrl(course.courseThumbnail)} alt={course.courseTitle} className="course-thumbnail-image" />
                     )}
                   </div>
 
@@ -68,20 +72,20 @@ const MyEnrollments = () => {
                             )}
                           </span>
                         </div>
-                        <Line 
-                          percent={progress} 
-                          strokeWidth="2.5" 
-                          strokeColor={progress === 100 ? "#10b981" : "#2563eb"} 
-                          trailColor="#f3f4f6" 
+                        <Line
+                          percent={progress}
+                          strokeWidth="2.5"
+                          strokeColor={progress === 100 ? "#10b981" : "#2563eb"}
+                          trailColor="#f3f4f6"
                           strokeLinecap="round"
                         />
                       </div>
 
-                      <button 
+                      <button
                         onClick={() => navigate(`/player/${course._id}`)}
                         className={`w-full py-2.5 px-4 rounded-xl font-bold text-xs cursor-pointer text-center transition-all ${
-                          progress === 100 
-                            ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100" 
+                          progress === 100
+                            ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
                             : "bg-blue-600 text-white hover:bg-blue-700 shadow-md shadow-blue-50"
                         }`}
                       >
@@ -98,7 +102,7 @@ const MyEnrollments = () => {
             <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500 font-bold text-lg mb-2">You aren't enrolled in any courses yet</p>
             <p className="text-gray-400 text-sm mb-6 max-w-sm mx-auto">Browse our catalogue of high-quality developer and designer lectures and begin learning.</p>
-            <Link 
+            <Link
               to="/course-list"
               className="inline-flex items-center px-6 py-3 font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 shadow-md shadow-blue-50 transition-all duration-300 cursor-pointer"
             >

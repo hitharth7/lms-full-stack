@@ -1,3 +1,5 @@
+import { assets } from '../assets/assets.js';
+
 export const thumbnailThemes = [
   {
     label: "Ocean Blue",
@@ -32,4 +34,12 @@ export const isGradientThumbnail = (courseThumbnail) => {
 
 export const getThumbnailThemeClass = (courseThumbnail) => {
   return thumbnailThemes.find((theme) => theme.value === courseThumbnail)?.className || "thumbnail-theme-default";
+};
+
+export const getThumbnailUrl = (courseThumbnail) => {
+  if (!courseThumbnail) return '';
+  if (assets[courseThumbnail]) {
+    return assets[courseThumbnail];
+  }
+  return courseThumbnail;
 };

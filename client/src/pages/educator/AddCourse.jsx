@@ -3,20 +3,22 @@ import { useNavigate } from 'react-router-dom'
 import { AppContext } from '../../context/AppContext.jsx'
 import Quill from 'quill'
 import 'quill/dist/quill.snow.css'
-import { Plus, Trash, Check, ArrowRight } from 'lucide-react'
+import { Plus, Trash, Check, ArrowRight, Loader2 } from 'lucide-react'
 import uniqid from 'uniqid'
 import { thumbnailThemes } from '../../utils/courseThumbnail.js'
+import { toast } from 'react-toastify'
 
 const AddCourse = () => {
   const navigate = useNavigate();
   const { addCourse } = useContext(AppContext);
-  
+
   // Basic Info States
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Development");
   const [price, setPrice] = useState("");
   const [discount, setDiscount] = useState("");
   const [selectedThumbnail, setSelectedThumbnail] = useState("linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)");
+  const [submitting, setSubmitting] = useState(false);
 
   // Quill editor
   const editorRef = useRef(null);
@@ -42,7 +44,7 @@ const AddCourse = () => {
   // Chapters curriculum state
   const [chapters, setChapters] = useState([]);
   const [activeChapterTitle, setActiveChapterTitle] = useState("");
-  
+
   // Modal states for lecture
   const [activeChapForLec, setActiveChapForLec] = useState(null);
   const [lectureTitle, setLectureTitle] = useState("");
@@ -79,10 +81,7 @@ const AddCourse = () => {
 
     setChapters(chapters.map((ch) => {
       if (ch.chapterId === activeChapForLec) {
-        return {
-          ...ch,
-          chapterContent: [...ch.chapterContent, newLec]
-        };
+        return { ...ch, chapterContent: [...ch.chapterContent, newLec] };
       }
       return ch;
     }));
@@ -98,30 +97,18 @@ const AddCourse = () => {
   const handleRemoveLecture = (chapId, lecId) => {
     setChapters(chapters.map((ch) => {
       if (ch.chapterId === chapId) {
-        return {
-          ...ch,
-          chapterContent: ch.chapterContent.filter((l) => l.lectureId !== lecId)
-        };
+        return { ...ch, chapterContent: ch.chapterContent.filter((l) => l.lectureId !== lecId) };
       }
       return ch;
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim() || !price || !quill) {
-      alert("Please provide a course title, price, and description details.");
+      toast.error("Please provide a course title, price, and description details.");
       return;
     }
-
-    let lecturesCount = 0;
-    let duration = 0;
-    chapters.forEach((ch) => {
-      lecturesCount += ch.chapterContent.length;
-      ch.chapterContent.forEach((lec) => {
-        duration += lec.lectureDuration;
-      });
-    });
 
     const descriptionHtml = quill.root.innerHTML;
 
@@ -132,14 +119,19 @@ const AddCourse = () => {
       discount: parseFloat(discount) || 0,
       thumbnail: selectedThumbnail,
       description: descriptionHtml,
-      duration,
-      lecturesCount,
       chapters
     };
 
-    addCourse(courseData);
-    alert("Course created and published successfully!");
-    navigate('/educator/my-courses');
+    setSubmitting(true);
+    const result = await addCourse(courseData);
+    setSubmitting(false);
+
+    if (result.success) {
+      toast.success("Course created and published successfully!");
+      navigate('/educator/my-courses');
+    } else {
+      toast.error(result.message || "Failed to create course. Please try again.");
+    }
   };
 
   return (
@@ -150,7 +142,7 @@ const AddCourse = () => {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        
+
         {/* Course essentials */}
         <div className="border border-gray-100 rounded-3xl p-6 bg-white shadow-sm space-y-6">
           <h3 className="font-extrabold text-gray-800 text-base border-b border-gray-50 pb-3">1. Course Essentials</h3>
@@ -158,8 +150,8 @@ const AddCourse = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div className="space-y-2 md:col-span-2">
               <label className="text-xs font-bold uppercase text-gray-400">Course Title</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
@@ -170,7 +162,7 @@ const AddCourse = () => {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-gray-400">Category</label>
-              <select 
+              <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-blue-600"
@@ -203,8 +195,8 @@ const AddCourse = () => {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-gray-400">Original Price ($)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 required
                 min="0"
                 step="0.01"
@@ -217,8 +209,8 @@ const AddCourse = () => {
 
             <div className="space-y-2">
               <label className="text-xs font-bold uppercase text-gray-400">Discount Percent (%)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 min="0"
                 max="100"
                 value={discount}
@@ -241,7 +233,7 @@ const AddCourse = () => {
           <h3 className="font-extrabold text-gray-800 text-base border-b border-gray-50 pb-3">3. Curriculum sections builder</h3>
 
           <div className="flex gap-2.5">
-            <input 
+            <input
               type="text"
               value={activeChapterTitle}
               onChange={(e) => setActiveChapterTitle(e.target.value)}
@@ -318,12 +310,16 @@ const AddCourse = () => {
 
         {/* Submit */}
         <div className="flex justify-end pt-4">
-          <button 
+          <button
             type="submit"
-            className="px-8 py-3.5 bg-blue-600 text-white font-extrabold text-sm rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-50 transition-all flex items-center gap-2 cursor-pointer"
+            disabled={submitting}
+            className="px-8 py-3.5 bg-blue-600 text-white font-extrabold text-sm rounded-2xl hover:bg-blue-700 shadow-lg shadow-blue-50 transition-all flex items-center gap-2 cursor-pointer disabled:opacity-70"
           >
-            Publish Course
-            <ArrowRight className="w-4 h-4" />
+            {submitting ? (
+              <><Loader2 className="w-4 h-4 animate-spin" /> Publishing...</>
+            ) : (
+              <>Publish Course <ArrowRight className="w-4 h-4" /></>
+            )}
           </button>
         </div>
       </form>
@@ -332,15 +328,15 @@ const AddCourse = () => {
       {activeChapForLec && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-xs animate-fade-in" onClick={() => setActiveChapForLec(null)}></div>
-          
-          <form 
+
+          <form
             onSubmit={handleAddLecture}
             className="relative bg-white rounded-3xl p-6 w-full max-w-md z-10 shadow-2xl space-y-4 animate-scale-in"
           >
             <div className="border-b border-gray-100 pb-3 flex justify-between items-center">
               <h4 className="font-extrabold text-gray-800 text-base">Add New Lecture</h4>
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={() => setActiveChapForLec(null)}
                 className="text-gray-400 hover:text-gray-600 text-xl cursor-pointer"
               >
@@ -350,8 +346,8 @@ const AddCourse = () => {
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-gray-400 uppercase">Lecture Title</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 required
                 value={lectureTitle}
                 onChange={(e) => setLectureTitle(e.target.value)}
@@ -362,8 +358,8 @@ const AddCourse = () => {
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-gray-400 uppercase">Duration (Minutes)</label>
-              <input 
-                type="number" 
+              <input
+                type="number"
                 required
                 min="1"
                 value={lectureDuration}
@@ -375,8 +371,8 @@ const AddCourse = () => {
 
             <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-gray-400 uppercase">YouTube Video ID</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 required
                 value={lectureVideoId}
                 onChange={(e) => setLectureVideoId(e.target.value)}
@@ -386,7 +382,7 @@ const AddCourse = () => {
             </div>
 
             <label className="flex items-center gap-2.5 text-sm text-gray-600 cursor-pointer pt-1.5">
-              <input 
+              <input
                 type="checkbox"
                 checked={lectureIsPreview}
                 onChange={(e) => setLectureIsPreview(e.target.checked)}
@@ -396,14 +392,14 @@ const AddCourse = () => {
             </label>
 
             <div className="pt-2 flex gap-3">
-              <button 
+              <button
                 type="button"
                 onClick={() => setActiveChapForLec(null)}
                 className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold text-xs rounded-xl hover:bg-gray-50 cursor-pointer"
               >
                 Cancel
               </button>
-              <button 
+              <button
                 type="submit"
                 className="flex-1 py-2.5 bg-blue-600 text-white font-semibold text-xs rounded-xl hover:bg-blue-700 cursor-pointer"
               >

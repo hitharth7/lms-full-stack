@@ -67,7 +67,7 @@ const Payment = () => {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault()
     setError('')
 
@@ -90,11 +90,23 @@ const Payment = () => {
     }
 
     setProcessing(true)
-    window.setTimeout(() => {
-      enrollInCourse(course._id)
-      toast.success('Payment successful. Course enrolled.')
-      navigate(`/player/${course._id}`, { replace: true })
-    }, 600)
+    try {
+      const result = await enrollInCourse(course._id)
+      if (result.success) {
+        toast.success('Payment successful. Course enrolled!')
+        navigate(`/player/${course._id}`, { replace: true })
+      } else {
+        const msg = result.message || 'Enrollment failed. Please try again.'
+        setError(msg)
+        toast.error(msg)
+        setProcessing(false)
+      }
+    } catch (err) {
+      const msg = 'Something went wrong. Please try again.'
+      setError(msg)
+      toast.error(msg)
+      setProcessing(false)
+    }
   }
 
   return (
@@ -185,7 +197,7 @@ const Payment = () => {
                 className="w-full inline-flex items-center justify-center gap-2 py-3.5 bg-blue-600 text-white font-extrabold text-sm rounded-2xl hover:bg-blue-700 disabled:opacity-70 cursor-pointer"
               >
                 <LockKeyhole className="w-4 h-4" />
-                {processing ? 'Processing test payment...' : `Pay $${discountedPrice} and enroll`}
+                {processing ? 'Processing payment...' : `Pay $${discountedPrice} and enroll`}
               </button>
             </form>
           </section>

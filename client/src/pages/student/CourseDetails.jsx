@@ -4,7 +4,7 @@ import { AppContext } from '../../context/AppContext.jsx'
 import Navbar from '../../components/student/Navbar.jsx'
 import Footer from '../../components/student/Footer.jsx'
 import Rating from '../../components/student/Rating.jsx'
-import { getThumbnailThemeClass, isGradientThumbnail } from '../../utils/courseThumbnail.js'
+import { getThumbnailThemeClass, isGradientThumbnail, getThumbnailUrl } from '../../utils/courseThumbnail.js'
 import { formatCourseDuration } from '../../utils/formatDuration.js'
 import { 
   Play, BookOpen, Clock, Calendar, Globe, Award, 
@@ -232,7 +232,7 @@ const CourseDetails = () => {
               }`}
             >
               {!isGradientThumbnail(course.courseThumbnail) && course.courseThumbnail && (
-                <img src={course.courseThumbnail} alt={course.courseTitle} className="course-thumbnail-image" />
+                <img src={getThumbnailUrl(course.courseThumbnail)} alt={course.courseTitle} className="absolute inset-0 w-full h-full object-cover" />
               )}
               <button 
                 onClick={() => setPreviewVideo(course.chapters[0]?.chapterContent[0]?.videoUrl || "Ke90Tje7VS0")}

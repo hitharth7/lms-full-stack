@@ -1,16 +1,30 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { AppContext } from '../../context/AppContext.jsx'
-import { DollarSign, Users, BookOpen } from 'lucide-react'
+import { DollarSign, Users, BookOpen, Loader2 } from 'lucide-react'
 
 const Dashboard = () => {
-  const { getEducatorMetrics } = useContext(AppContext);
-  const metrics = getEducatorMetrics();
+  const { fetchEducatorDashboard, educatorDashboard, educatorLoading } = useContext(AppContext);
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    fetchEducatorDashboard().finally(() => setInitialized(true));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const metrics = educatorDashboard || { totalEarnings: 0, totalStudents: 0, coursesCreated: 0, recentStudents: [] };
 
   const statCards = [
     { name: "Total Earnings", value: `$${metrics.totalEarnings.toLocaleString()}`, description: "Across all courses", icon: DollarSign, color: "text-blue-600 bg-blue-50 border-blue-100" },
     { name: "Total Enrolled Students", value: metrics.totalStudents, description: "Active users count", icon: Users, color: "text-emerald-600 bg-emerald-50 border-emerald-100" },
     { name: "Courses Created", value: metrics.coursesCreated, description: "Published list catalog", icon: BookOpen, color: "text-purple-600 bg-purple-50 border-purple-100" },
   ];
+
+  if (!initialized || educatorLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
@@ -43,36 +57,42 @@ const Dashboard = () => {
           <span className="text-xs text-gray-400 font-bold uppercase tracking-wider">{metrics.recentStudents.length} entries</span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                <th className="px-6 py-4">Student Name</th>
-                <th className="px-6 py-4">Enrolled Course</th>
-                <th className="px-6 py-4">Join Date</th>
-                <th className="px-6 py-4">Progress</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm text-gray-600">
-              {metrics.recentStudents.map((stud) => (
-                <tr key={stud.id} className="hover:bg-gray-50/30 transition-colors">
-                  <td className="px-6 py-4">
-                    <p className="font-bold text-gray-900">{stud.name}</p>
-                    <p className="text-xs text-gray-400">{stud.email}</p>
-                  </td>
-                  <td className="px-6 py-4 font-semibold text-gray-700 max-w-xs truncate">{stud.courseTitle}</td>
-                  <td className="px-6 py-4 font-medium text-gray-500">{stud.date}</td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <progress className="educator-progress w-16" value={stud.progress} max="100" aria-label={`${stud.name} progress`} />
-                      <span className="text-xs font-bold text-gray-700">{stud.progress}%</span>
-                    </div>
-                  </td>
+        {metrics.recentStudents.length > 0 ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50/50 border-b border-gray-100 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                  <th className="px-6 py-4">Student Name</th>
+                  <th className="px-6 py-4">Enrolled Course</th>
+                  <th className="px-6 py-4">Join Date</th>
+                  <th className="px-6 py-4">Progress</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100 text-sm text-gray-600">
+                {metrics.recentStudents.map((stud) => (
+                  <tr key={stud.id} className="hover:bg-gray-50/30 transition-colors">
+                    <td className="px-6 py-4">
+                      <p className="font-bold text-gray-900">{stud.name}</p>
+                      <p className="text-xs text-gray-400">{stud.email}</p>
+                    </td>
+                    <td className="px-6 py-4 font-semibold text-gray-700 max-w-xs truncate">{stud.courseTitle}</td>
+                    <td className="px-6 py-4 font-medium text-gray-500">{stud.date}</td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <progress className="educator-progress w-16" value={stud.progress} max="100" aria-label={`${stud.name} progress`} />
+                        <span className="text-xs font-bold text-gray-700">{stud.progress}%</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="text-center py-12 text-gray-400 text-sm">
+            No student enrollments yet. Share your courses to get started.
+          </div>
+        )}
       </div>
     </div>
   )

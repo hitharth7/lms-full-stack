@@ -9,35 +9,44 @@ import { formatCourseDuration } from '../../utils/formatDuration.js'
 const Player = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { courses, completedLectures, toggleLectureCompletion, getCourseProgressPercent, isEnrolled } = useContext(AppContext);
+  const {
+    courses,
+    getCompletedLectures,
+    toggleLectureCompletion,
+    getCourseProgressPercent,
+    isEnrolled,
+    enrollmentsLoading,
+  } = useContext(AppContext);
+
   const [activeLecture, setActiveLecture] = useState(null);
   const [openChapters, setOpenChapters] = useState({});
   const [activeTab, setActiveTab] = useState("overview");
 
   const course = courses.find((c) => c._id === id);
+  const completedLectures = getCompletedLectures(id);
 
-  // If not enrolled or course doesn't exist, redirect
+  // Once course is ready and enrollments loaded, run access check and set first lecture
   useEffect(() => {
-    if (course) {
-      if (!isEnrolled(course._id)) {
-        alert("You must enroll in this course first to open the player.");
-        navigate(`/course/${course._id}`);
-        return;
-      }
-      
-      // Select first lecture by default
-      if (course.chapters.length > 0 && course.chapters[0].chapterContent.length > 0) {
-        setActiveLecture(course.chapters[0].chapterContent[0]);
-      }
+    if (!course || enrollmentsLoading) return;
 
-      // Open all chapters by default for easy navigation
-      const initialOpen = {};
-      course.chapters.forEach((ch) => {
-        initialOpen[ch.chapterId] = true;
-      });
-      setOpenChapters(initialOpen);
+    if (!isEnrolled(course._id)) {
+      alert("You must enroll in this course first to open the player.");
+      navigate(`/course/${course._id}`);
+      return;
     }
-  }, [course]);
+
+    // Select first lecture by default
+    if (course.chapters.length > 0 && course.chapters[0].chapterContent.length > 0) {
+      setActiveLecture(course.chapters[0].chapterContent[0]);
+    }
+
+    // Open all chapters by default for easy navigation
+    const initialOpen = {};
+    course.chapters.forEach((ch) => {
+      initialOpen[ch.chapterId] = true;
+    });
+    setOpenChapters(initialOpen);
+  }, [course, enrollmentsLoading]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!course || !activeLecture) {
     return (
@@ -58,8 +67,7 @@ const Player = () => {
   };
 
   const isLectureCompleted = (lectureId) => {
-    const list = completedLectures[course._id] || [];
-    return list.includes(lectureId);
+    return completedLectures.includes(lectureId);
   };
 
   const progress = getCourseProgressPercent(course._id);
@@ -79,7 +87,7 @@ const Player = () => {
       {/* Player Header */}
       <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 relative z-10">
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => navigate('/my-enrollments')}
             className="p-2 hover:bg-gray-100 rounded-xl text-gray-500 hover:text-gray-900 transition-colors cursor-pointer"
           >
@@ -96,11 +104,11 @@ const Player = () => {
         {/* Progress Display */}
         <div className="flex items-center gap-3.5">
           <div className="hidden sm:block w-36">
-            <Line 
-              percent={progress} 
-              strokeWidth="3" 
-              strokeColor={progress === 100 ? "#10b981" : "#2563eb"} 
-              trailColor="#f3f4f6" 
+            <Line
+              percent={progress}
+              strokeWidth="3"
+              strokeColor={progress === 100 ? "#10b981" : "#2563eb"}
+              trailColor="#f3f4f6"
               strokeLinecap="round"
             />
           </div>
@@ -112,14 +120,14 @@ const Player = () => {
 
       {/* Main Layout Splitter */}
       <div className="flex-grow flex flex-col lg:flex-row overflow-hidden">
-        
+
         {/* Left Column (Video Frame + Info Tab) */}
         <div className="flex-grow overflow-y-auto p-4 sm:p-6 space-y-6">
           {/* Video Container Aspect Frame */}
           <div className="w-full bg-black rounded-3xl overflow-hidden shadow-lg aspect-video relative z-0">
-            <YouTube 
-              videoId={activeLecture.videoUrl} 
-              opts={youtubeOpts} 
+            <YouTube
+              videoId={activeLecture.videoUrl}
+              opts={youtubeOpts}
               className="w-full h-full"
               containerClassName="w-full h-full"
             />
@@ -131,7 +139,7 @@ const Player = () => {
               <h2 className="text-xl font-extrabold text-gray-900 leading-tight">
                 {activeLecture.lectureTitle}
               </h2>
-              
+
               {/* Checkbox completed toggle */}
               <button
                 onClick={() => toggleLectureCompletion(course._id, activeLecture.lectureId)}
@@ -188,12 +196,12 @@ const Player = () => {
 
               {activeTab === "notes" && (
                 <div className="space-y-3">
-                  <textarea 
-                    placeholder="Take notes for this lecture here..." 
+                  <textarea
+                    placeholder="Take notes for this lecture here..."
                     rows="3"
                     className="w-full p-3 border border-gray-200 rounded-xl focus:outline-none focus:border-blue-600 text-sm"
                   ></textarea>
-                  <button 
+                  <button
                     onClick={() => alert("Note saved successfully!")}
                     className="px-4 py-2 bg-blue-600 text-white font-semibold text-xs rounded-lg hover:bg-blue-700 transition-all cursor-pointer"
                   >
@@ -230,14 +238,14 @@ const Player = () => {
                       {chapter.chapterContent.map((lecture) => {
                         const isActive = activeLecture.lectureId === lecture.lectureId;
                         const isDone = isLectureCompleted(lecture.lectureId);
-                        
+
                         return (
                           <button
                             key={lecture.lectureId}
                             onClick={() => setActiveLecture(lecture)}
                             className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-all cursor-pointer ${
-                              isActive 
-                                ? "bg-blue-50/70 border-l-4 border-blue-600" 
+                              isActive
+                                ? "bg-blue-50/70 border-l-4 border-blue-600"
                                 : "hover:bg-gray-50/50"
                             }`}
                           >

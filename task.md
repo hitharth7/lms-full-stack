@@ -1,0 +1,3 @@
+- `[x]` Create frontend `.env` config file with `VITE_BACKEND_URL`
+- `[x]` Update `AppContext.jsx` to load and store auth state using backend API calls
+- `[x]` Verify connection and authentication flow
